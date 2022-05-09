@@ -3,30 +3,35 @@
 <head>
 	<title>Upload Images to Server</title>
 	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/pico.classless.min.css">
 </head>
 <body>
-	<h1>Upload Image</h1>
- 
-	<form action="/item" method="post" enctype="multipart/form-data">
-		<label for="frm_img">Image:</label>
-		<input type="file" id="frm_img" accept="image/*" name="image" />
+	<main>
+		<h1>Upload Image</h1>
+	 
+		<form action="/item" method="post" enctype="multipart/form-data">
+			<section>
+				<label for="frm_img">Image</label>
+				<input type="file" id="frm_img" accept="image/*" name="image" />
 
-		<label for="frm_desc">Description</label>
-		<input type="text" id="frm_desc" name="description" />
+				<label for="frm_desc">Description</label>
+				<input type="text" id="frm_desc" name="description" />
 
-		<label for="frm_col">Collections:</label>
-		<select name="collection" id="frm_col" multiple required>
-			<option value="volvo">Volvo</option>
-			<option value="saab">Saab</option>
-			<option value="opel">Opel</option>
-		</select>
+				<label for="frm_col">Collections</label>
+				<select name="collection" id="frm_col" multiple required>
+					<option value="volvo">Volvo</option>
+					<option value="saab">Saab</option>
+					<option value="opel">Opel</option>
+				</select>
 
-		<label for="frm_date">Date</label>
-		<input type="date" id="frm_date" name="date" required />
-		<label for="frm_sortDate">Sort</label>
-		<input type="checkbox" id="frm_sortDate" name="sortDate" />
+				<label for="frm_date">Date</label>
+				<input type="date" id="frm_date" name="date" required />
+				<label for="frm_sortDate">Sortdate <input type="checkbox" role="switch" id="frm_sortDate" name="sortDate" /></label>		
+			</section>
 
-		<input type="submit" value="Add">
-	</form>
+			<input type="submit" value="Add">
+		</form>
+	</main>
 </body>
 </html>

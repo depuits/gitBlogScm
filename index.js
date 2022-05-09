@@ -11,7 +11,9 @@ const port = 3000;
 const gitRepo = '';
 
 // clone git repo if it does not exist
+//TODO
 
+app.use('/css', express.static(__dirname + '/node_modules/@picocss/pico/css/'));
 app.use(express.static('public'));
 
 app.post('/item', upload.single('image'), function (req, res, next) {
