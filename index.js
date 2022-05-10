@@ -58,16 +58,16 @@ async function setupApp() {
 
 			//3. `git add .`
 			console.log ('add file');
-			//await git.add(changedFiles);
+			await git.add(changedFiles);
 
 			//4. `git commit`
 			const mfn = path.parse(changedFiles[0]).name;
 			console.log ('create commit for ' + mfn);
-			//await git.commit(`added item (${mfn})`);
+			await git.commit(`added item (${mfn})`);
 
 			//5. `git push`
 			console.log ('push');
-			//await git.push();
+			await git.push();
 
 			res.redirect('success.html');
 		} catch (e) {
