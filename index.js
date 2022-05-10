@@ -1,6 +1,6 @@
 const express = require('express');
 const multer  = require('multer');
-const md5 = require('crypto-js/md5');
+const crypto = require('crypto');
 
 const fs = require('fs');
 const path = require('path');
@@ -37,11 +37,15 @@ async function setupApp() {
 
 	await git.addConfig('user.name', gitUserName);
 	await git.addConfig('user.email', gitUserMail);
-
+	
 	const storage = multer.diskStorage({
 		destination: fileUploadDest,
 		filename: function (req, file, cb) {
-			cb(null, md5(file.buffer) + path.extname(file.originalname)); //fix for missing extension files
+			crypto.pseudoRandomBytes(16, function (err, raw) {
+				if (err) return cb(err);
+
+				cb(null, raw.toString('hex') + path.extname(file.originalname).toLowerCase()); //fix for missing extension files
+			});
 		},
 	});
 	const upload = multer({ storage: storage });
