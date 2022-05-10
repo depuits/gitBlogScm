@@ -1,39 +1,88 @@
 const express = require('express');
 const multer  = require('multer');
 
+const fs = require('fs');
+const path = require('path');
+const config = require('config');
+const simpleGit = require('simple-git');
+const handleForm = require('./handleForm.js');
 
-const upload = multer({ dest: 'uploads/' }); // TODO change location
+const gitRepo = config.get('repo');
+const gitUserName = config.get('gitUserName');
+const gitUserMail = config.get('gitUserMail');
 
-const app = express();
+const repoDest = config.get('repoDest');
+const fileUploadDest = path.join(repoDest, config.get('fileUploadDest'));
+const fileCreateDest = path.join(repoDest, config.get('fileCreateDest'));
 
-// TODO load from somewhere (config/env/args)
-const port = 3000;
-const gitRepo = '';
+if (!gitRepo || !gitUserName || !gitUserMail) {
+	console.error('Git config not complete.');
+	process.exit(1);
+}
 
-// clone git repo if it does not exist
-//TODO
+async function setupApp() {
+	// clone git repo if it does not exist
+	const repoExists = fs.existsSync(repoDest);
 
-app.use('/css', express.static(__dirname + '/node_modules/@picocss/pico/css/'));
-app.use(express.static('public'));
+	//create directory for git initialisation
+	await fs.promises.mkdir(repoDest, {recursive:true});
 
-app.post('/item', upload.single('image'), function (req, res, next) {
-/*
-1. `git pull` # to make sure we have the latest version and no merge conflicts
+	const git = simpleGit(repoDest);
 
-2. upload and create new files
+	if (!repoExists) {
+		console.log ('Cloning git repo: ' + gitRepo);
+		await git.clone(gitRepo, '.');
+	}
 
-	// req.file is the `image` file
-	// req.file.filename -> we only need the filename in or instance
-	// req.body will hold the text fields, if there were any
+	await git.addConfig('user.name', gitUserName);
+	await git.addConfig('user.email', gitUserMail);
 
-	// add files and commit, push, etc
+	const upload = multer({ dest: fileUploadDest });
+	const app = express();
 
-3. `git add .`
-4. `git commit`
-5. `git push`
-*/
-});
+	app.use('/css', express.static(__dirname + '/node_modules/@picocss/pico/css/'));
+	app.use(express.static('public'));
 
-app.listen(port, () => {
-    console.log('Listening at ' + port );
+	app.post('/item', upload.single('image'), async (req, res, next) => {
+		try {
+			//1. `git pull` # to make sure we have the latest version and no merge conflicts
+			console.log ('pull');
+			await git.pull();
+			
+			//2. upload and create new files
+			console.log ('processing input');
+			let changedFiles = await handleForm(fileCreateDest, req);
+
+			// remove repo dir from changedFiles paths
+			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
+
+			//3. `git add .`
+			console.log ('add file');
+			//await git.add(changedFiles);
+
+			//4. `git commit`
+			const mfn = path.parse(changedFiles[0]).name;
+			console.log ('create commit for ' + mfn);
+			//await git.commit(`added item (${mfn})`);
+
+			//5. `git push`
+			console.log ('push');
+			//await git.push();
+
+			res.redirect('success.html');
+		} catch (e) {
+			return next(e)
+		}
+	});
+
+	return app;
+}
+
+setupApp().then(app => {
+	const port = config.get('port');
+	app.listen(port, () => {
+	    console.log('Listening at ' + port );
+	});
+}).catch(e => {
+	console.error(e);
 });

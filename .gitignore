@@ -130,3 +130,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+repo/
+
+# ignore all config files except the default
+config/
+!config/default.js
