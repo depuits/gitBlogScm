@@ -1,5 +1,6 @@
 const express = require('express');
 const multer  = require('multer');
+const md5 = require('crypto-js/md5');
 
 const fs = require('fs');
 const path = require('path');
@@ -37,7 +38,13 @@ async function setupApp() {
 	await git.addConfig('user.name', gitUserName);
 	await git.addConfig('user.email', gitUserMail);
 
-	const upload = multer({ dest: fileUploadDest });
+	const storage = multer.diskStorage({
+		destination: fileUploadDest,
+		filename: function (req, file, cb) {
+			cb(null, md5(file.buffer) + path.extname(file.originalname)); //fix for missing extension files
+		},
+	});
+	const upload = multer({ storage: storage });
 	const app = express();
 
 	app.use('/css', express.static(__dirname + '/node_modules/@picocss/pico/css/'));
