@@ -17,7 +17,7 @@ steps:
 - name: docker ghrc
   image: plugins/docker
   settings:
-    registry: ghcr.io
+    registry: docker.pkg.github.com
     repo: depuits/gitblogscm
     auto_tag: true
     username:
