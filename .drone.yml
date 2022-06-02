@@ -4,7 +4,7 @@ type: docker
 name: default
 
 steps:
-- name: docker  
+- name: docker hub
   image: plugins/docker
   settings:
     repo: depuits/gitblogscm
@@ -14,7 +14,7 @@ steps:
     password:
       from_secret: docker_password
 
-- name: docker  
+- name: docker ghrc
   image: plugins/docker
   settings:
     registry: ghcr.io
