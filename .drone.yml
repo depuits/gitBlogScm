@@ -13,4 +13,15 @@ steps:
       from_secret: docker_username
     password:
       from_secret: docker_password
+
+- name: docker  
+  image: plugins/docker
+  settings:
+    registry: ghcr.io
+    repo: depuits/gitblogscm
+    auto_tag: true
+    username:
+      from_secret: github_username
+    password:
+      from_secret: github_password
 ...
