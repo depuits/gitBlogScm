@@ -4,16 +4,6 @@ type: docker
 name: default
 
 steps:
-- name: docker hub
-  image: plugins/docker
-  settings:
-    repo: depuits/gitblogscm
-    auto_tag: true
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-
 - name: docker ghrc
   image: plugins/docker
   settings:
@@ -24,4 +14,14 @@ steps:
       from_secret: github_username
     password:
       from_secret: github_password
+      
+- name: docker hub
+  image: plugins/docker
+  settings:
+    repo: depuits/gitblogscm
+    auto_tag: true
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
 ...
