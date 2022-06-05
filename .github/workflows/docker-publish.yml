@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: gitBlogScm
+  IMAGE_NAME: gitblogscm
 
 jobs:
   # Run tests.
