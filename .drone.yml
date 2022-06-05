@@ -4,17 +4,6 @@ type: docker
 name: default
 
 steps:
-- name: docker ghrc
-  image: plugins/docker
-  settings:
-    registry: docker.pkg.github.com
-    repo: docker.pkg.github.com/depuits/gitblogscm/gitblogscm
-    auto_tag: true
-    username:
-      from_secret: github_username
-    password:
-      from_secret: github_password
-      
 - name: docker hub
   image: plugins/docker
   settings:
