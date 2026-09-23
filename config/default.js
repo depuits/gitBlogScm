@@ -12,6 +12,7 @@ module.exports = {
      buildStatus: {
        enabled: false,
        url: '',
+       img: '',
        label: 'Build status',
      },
      submitLabel: 'Add',

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{app.title}}</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="manifest" href="/manifest.json">
+	<link rel="stylesheet" href="css/pico.classless.min.css">
+	<link rel="stylesheet" href="app.css">
+</head>
+<body>
+	<main>
+	    {{#ui.buildStatus.enabled}}
+			<div>
+				{{ui.buildStatus.label}}
+				<a href="{{ui.buildStatus.url}}">
+					<img src="{{ui.buildStatus.img}}" alt="{{ui.buildStatus.label}}">
+				</a>
+			</div>
+	    {{/ui.buildStatus.enabled}}
+
+    	{{{body}}}
+	</main>
+</body>
+</html>

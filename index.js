@@ -1,6 +1,7 @@
 const express = require('express');
 const multer  = require('multer');
 const crypto = require('crypto');
+const { engine } = require('express-handlebars');
 
 const fs = require('fs');
 const path = require('path');
@@ -9,8 +10,8 @@ const simpleGit = require('simple-git');
 const handleForm = require('./handleForm.js');
 
 const devMode =
-    process.argv.includes('--dev') ||
-    process.argv.includes('--test');
+	process.argv.includes('--dev') ||
+	process.argv.includes('--test');
 
 const gitRepo = config.get('git.url');
 const repoDest = config.get('git.path');
@@ -20,8 +21,13 @@ const gitUserMail = config.get('git.userMail');
 const fileUploadDest = path.join(repoDest, config.get('content.fileUploadDest'));
 const fileCreateDest = path.join(repoDest, config.get('content.fileCreateDest'));
 
+const viewConfig = {
+    app: config.get('app'),
+    ui: config.get('ui'),
+};
+
 if (devMode) {
-    console.log('Running in development/test mode - Git actions disabled.');
+	console.log('Running in development/test mode - Git actions disabled.');
 } else {	
 	if (!gitRepo || !gitUserName || !gitUserMail) {
 		console.error('Git config not complete.');
@@ -38,7 +44,7 @@ async function setupApp() {
 
 	const git = simpleGit(repoDest);
 
-    if (!devMode) {
+	if (!devMode) {
 		if (!repoExists) {
 			console.log ('Cloning git repo: ' + gitRepo);
 			await git.clone(gitRepo, '.');
@@ -61,13 +67,27 @@ async function setupApp() {
 	const upload = multer({ storage: storage });
 	const app = express();
 
+	app.engine('hbs', engine({
+		extname: '.hbs',
+	}));
+
+	app.set('view engine', 'hbs');
+	app.set('views', './views');
+
 	app.use('/css', express.static(__dirname + '/node_modules/@picocss/pico/css/'));
 	app.use(express.static('public'));
+
+	app.get('/', (req, res) => {
+		res.render('index', viewConfig);
+	});
+	app.get('/success', (req, res) => {
+		res.render('success', viewConfig);
+	});
 
 	app.post('/item', upload.single('image'), async (req, res, next) => {
 		try {
 
-            if (!devMode) {
+			if (!devMode) {
 				//1. `git pull` # to make sure we have the latest version and no merge conflicts
 				console.log ('pull');
 				await git.pull();
@@ -80,10 +100,10 @@ async function setupApp() {
 			// remove repo dir from changedFiles paths
 			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
 
-            if (devMode) {
-                console.log('DEV MODE: skipping git add/commit/push');
-                console.log('Changed files:', changedFiles);
-            } else {
+			if (devMode) {
+				console.log('DEV MODE: skipping git add/commit/push');
+				console.log('Changed files:', changedFiles);
+			} else {
 				//3. `git add .`
 				console.log ('add file');
 				await git.add(changedFiles);
@@ -98,7 +118,7 @@ async function setupApp() {
 				await git.push();
 			}
 
-			res.redirect('success.html');
+			res.redirect('success');
 		} catch (e) {
 			return next(e)
 		}
@@ -110,7 +130,7 @@ async function setupApp() {
 setupApp().then(app => {
 	const port = config.get('server.port');
 	app.listen(port, () => {
-	    console.log('Listening at ' + port );
+		console.log('Listening at ' + port );
 	});
 }).catch(e => {
 	console.error(e);
