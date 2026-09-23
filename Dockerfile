@@ -10,7 +10,7 @@ WORKDIR /usr/src
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --omit=dev
 
 # Bundle app source
 ADD . ./

@@ -12,13 +12,13 @@ const devMode =
     process.argv.includes('--dev') ||
     process.argv.includes('--test');
 
-const gitRepo = config.get('repo');
-const gitUserName = config.get('gitUserName');
-const gitUserMail = config.get('gitUserMail');
+const gitRepo = config.get('git.url');
+const repoDest = config.get('git.path');
+const gitUserName = config.get('git.userName');
+const gitUserMail = config.get('git.userMail');
 
-const repoDest = config.get('repoDest');
-const fileUploadDest = path.join(repoDest, config.get('fileUploadDest'));
-const fileCreateDest = path.join(repoDest, config.get('fileCreateDest'));
+const fileUploadDest = path.join(repoDest, config.get('content.fileUploadDest'));
+const fileCreateDest = path.join(repoDest, config.get('content.fileCreateDest'));
 
 if (devMode) {
     console.log('Running in development/test mode - Git actions disabled.');
@@ -108,7 +108,7 @@ async function setupApp() {
 }
 
 setupApp().then(app => {
-	const port = config.get('port');
+	const port = config.get('server.port');
 	app.listen(port, () => {
 	    console.log('Listening at ' + port );
 	});

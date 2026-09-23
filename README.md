@@ -13,4 +13,7 @@ Simple content management interface for static generated blog in git.
 ```
 npm i
 npm start
+
+# or for interface testing only without git
+npm run dev
 ```
