@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const md5 = require('crypto-js/md5');
+const { createHash } = require('node:crypto');
 
 module.exports = async function (fileCreateDest, req) {
 	//1. validate input
@@ -44,7 +44,8 @@ module.exports = async function (fileCreateDest, req) {
 
 	md += '---\n\n';
 
-	let filePath = path.join(fileCreateDest, `${req.body.date}_${md5(md)}.md`);
+	const hash = createHash('md5').update(md).digest('hex');
+	let filePath = path.join(fileCreateDest, `${req.body.date}_${hash}.md`);
 	await fs.promises.writeFile(filePath, md, 'utf8');
 
 	let files = [ filePath ];

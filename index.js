@@ -1,6 +1,6 @@
 const express = require('express');
 const multer  = require('multer');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const { engine } = require('express-handlebars');
 
 const fs = require('fs');
