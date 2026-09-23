@@ -3,15 +3,18 @@
 <head>
 	<title>Photo timeline edit</title>
 	<meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="css/pico.classless.min.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="manifest" href="/manifest.json">
+	<link rel="stylesheet" href="css/pico.classless.min.css">
+	<link rel="stylesheet" href="app.css">
 </head>
 <body>
 	<main>
 		<div>
 			Status
-			<a href="https://drone.bok19.net/colmanjoeri/photoTimeline">
-				<img src="https://drone.bok19.net/api/badges/colmanjoeri/photoTimeline/status.svg" />
+			<a href="https://git.bok19.net/colmanjoeri/photoTimeline/actions?workflow=build.yml">
+				<img src="https://git.bok19.net/colmanjoeri/photoTimeline/actions/workflows/build.yml/badge.svg?branch=master" alt="Build static site">
 			</a>
 		</div>
 
@@ -20,7 +23,7 @@
 		<form action="/item" method="post" enctype="multipart/form-data">
 			<section>
 				<label for="frm_img">Image</label>
-				<input type="file" id="frm_img" accept=".jpg" name="image" />
+				<input type="file" id="frm_img" accept="image/jpeg,image/png,image/webp" name="image" />
 
 				<label for="frm_desc">Description</label>
 				<input type="text" id="frm_desc" name="desc" />
@@ -40,6 +43,8 @@
 
 			<input type="submit" value="Add">
 		</form>
+
+		<script src="/app.js"></script>
 	</main>
 </body>
 </html>
