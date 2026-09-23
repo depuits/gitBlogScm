@@ -8,6 +8,10 @@ const config = require('config');
 const simpleGit = require('simple-git');
 const handleForm = require('./handleForm.js');
 
+const devMode =
+    process.argv.includes('--dev') ||
+    process.argv.includes('--test');
+
 const gitRepo = config.get('repo');
 const gitUserName = config.get('gitUserName');
 const gitUserMail = config.get('gitUserMail');
@@ -16,9 +20,13 @@ const repoDest = config.get('repoDest');
 const fileUploadDest = path.join(repoDest, config.get('fileUploadDest'));
 const fileCreateDest = path.join(repoDest, config.get('fileCreateDest'));
 
-if (!gitRepo || !gitUserName || !gitUserMail) {
-	console.error('Git config not complete.');
-	process.exit(1);
+if (devMode) {
+    console.log('Running in development/test mode - Git actions disabled.');
+} else {	
+	if (!gitRepo || !gitUserName || !gitUserMail) {
+		console.error('Git config not complete.');
+		process.exit(1);
+	}
 }
 
 async function setupApp() {
@@ -30,13 +38,15 @@ async function setupApp() {
 
 	const git = simpleGit(repoDest);
 
-	if (!repoExists) {
-		console.log ('Cloning git repo: ' + gitRepo);
-		await git.clone(gitRepo, '.');
-	}
+    if (!devMode) {
+		if (!repoExists) {
+			console.log ('Cloning git repo: ' + gitRepo);
+			await git.clone(gitRepo, '.');
+		}
 
-	await git.addConfig('user.name', gitUserName);
-	await git.addConfig('user.email', gitUserMail);
+		await git.addConfig('user.name', gitUserName);
+		await git.addConfig('user.email', gitUserMail);
+	}
 	
 	const storage = multer.diskStorage({
 		destination: fileUploadDest,
@@ -56,9 +66,12 @@ async function setupApp() {
 
 	app.post('/item', upload.single('image'), async (req, res, next) => {
 		try {
-			//1. `git pull` # to make sure we have the latest version and no merge conflicts
-			console.log ('pull');
-			await git.pull();
+
+            if (!devMode) {
+				//1. `git pull` # to make sure we have the latest version and no merge conflicts
+				console.log ('pull');
+				await git.pull();
+			}
 			
 			//2. upload and create new files
 			console.log ('processing input');
@@ -67,18 +80,23 @@ async function setupApp() {
 			// remove repo dir from changedFiles paths
 			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
 
-			//3. `git add .`
-			console.log ('add file');
-			await git.add(changedFiles);
+            if (devMode) {
+                console.log('DEV MODE: skipping git add/commit/push');
+                console.log('Changed files:', changedFiles);
+            } else {
+				//3. `git add .`
+				console.log ('add file');
+				await git.add(changedFiles);
 
-			//4. `git commit`
-			const mfn = path.parse(changedFiles[0]).name;
-			console.log ('create commit for ' + mfn);
-			await git.commit(`added item (${mfn})`);
+				//4. `git commit`
+				const mfn = path.parse(changedFiles[0]).name;
+				console.log ('create commit for ' + mfn);
+				await git.commit(`added item (${mfn})`);
 
-			//5. `git push`
-			console.log ('push');
-			await git.push();
+				//5. `git push`
+				console.log ('push');
+				await git.push();
+			}
 
 			res.redirect('success.html');
 		} catch (e) {
