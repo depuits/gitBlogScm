@@ -1,6 +1,7 @@
 const express = require('express');
 const multer  = require('multer');
 const crypto = require('node:crypto');
+const Handlebars = require('handlebars');
 const { engine } = require('express-handlebars');
 
 const fs = require('fs');
@@ -22,8 +23,8 @@ const fileUploadDest = path.join(repoDest, config.get('content.fileUploadDest'))
 const fileCreateDest = path.join(repoDest, config.get('content.fileCreateDest'));
 
 const viewConfig = {
-    app: config.get('app'),
-    ui: config.get('ui'),
+	app: config.get('app'),
+	ui: config.get('ui'),
 };
 
 if (devMode) {
@@ -69,6 +70,13 @@ async function setupApp() {
 
 	app.engine('hbs', engine({
 		extname: '.hbs',
+		helpers: {
+			json(value) {
+				return new Handlebars.SafeString(
+					JSON.stringify(value)
+				);
+			},
+		},
 	}));
 
 	app.set('view engine', 'hbs');
@@ -78,10 +86,17 @@ async function setupApp() {
 	app.use(express.static('public'));
 
 	app.get('/', (req, res) => {
-		res.render('index', viewConfig);
+		res.render('index.html.hbs', viewConfig);
 	});
 	app.get('/success', (req, res) => {
-		res.render('success', viewConfig);
+		res.render('success.html.hbs', viewConfig);
+	});
+	app.get('/manifest.json', (req, res) => {
+		res.type('application/manifest+json');
+		res.render('manifest.json.hbs', {
+			layout: false,
+			...viewConfig,
+		});
 	});
 
 	app.post('/item', upload.single('image'), async (req, res, next) => {

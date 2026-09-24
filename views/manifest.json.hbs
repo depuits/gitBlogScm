@@ -1,6 +1,7 @@
 {
-  "name": "Photo timeline edit",
-  "short_name": "Photo timeline",
+  "name": {{{json app.title}}},
+  "short_name": {{{json app.shortTitle}}},
+  "description": {{{json app.description}}},
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#ffffff",
@@ -26,7 +27,11 @@
         {
           "name": "image",
           "accept": [
-            "image/*"
+            "image/*",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
           ]
         }
       ]

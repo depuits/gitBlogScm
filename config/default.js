@@ -5,6 +5,7 @@ module.exports = {
 
    app: {
       title: 'Git Blog SCM',
+      shortTitle: 'Blog SCM',
       description: 'Manage content for your static site',
    },
 
