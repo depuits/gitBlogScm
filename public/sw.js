@@ -17,9 +17,11 @@ self.addEventListener('fetch', (event) => {
 async function handleShareTarget(request) {
     try {
         const formData = await request.formData();
-        const image = formData.get('image');
+        const images = formData.getAll('image');
 
-        if (!(image instanceof File)) {
+        const image = images.find(file => file instanceof File);
+
+        if (!image ) {
             return Response.redirect('/?share-error=no-image', 303);
         }
 
