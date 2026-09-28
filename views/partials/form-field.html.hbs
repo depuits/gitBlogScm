@@ -1,0 +1,75 @@
+<div class="field">
+    {{#ifEquals type "checkbox"}}
+        <label for="{{name}}">
+            {{label}}
+            <input 
+                type="checkbox" 
+                role="switch"
+                id="{{name}}"
+                name="{{name}}"
+                {{#if required}}required{{/if}}
+                {{#if error}}aria-invalid="true"{{/if}}
+            />
+        </label>
+    {{else}}
+        <label for="{{name}}">
+            {{label}}
+        </label>
+
+        {{#ifEquals type "textarea"}}
+            <textarea
+                id="{{name}}"
+                name="{{name}}"
+                {{#if required}}required{{/if}}
+                {{#if maxLength}}maxlength="{{maxLength}}"{{/if}}
+                {{#if error}}aria-invalid="true"{{/if}}
+            >{{value}}</textarea>
+
+        {{else ifEquals type "select"}}
+            <select
+                id="{{name}}"
+                name="{{name}}"
+                {{#if required}}required{{/if}}
+                {{#if multiple}}multiple{{/if}}
+                {{#if error}}aria-invalid="true"{{/if}}
+            >
+                {{#each options}}
+                    <option
+                        value="{{this}}"
+                        {{#includes ../value this}}selected{{/includes}}
+                    >
+                        {{this}}
+                    </option>
+                {{/each}}
+            </select>
+
+        {{else ifEquals type "file"}}
+            <input
+                id="{{name}}"
+                name="{{name}}"
+                type="file"
+                {{#if required}}required{{/if}}
+                {{#if multiple}}multiple{{/if}}
+                {{#if accept}}accept="{{join accept ","}}"{{/if}}
+                {{#if error}}aria-invalid="true"{{/if}}
+            />
+
+        {{else}}
+            <input
+                id="{{name}}"
+                name="{{name}}"
+                type="{{type}}"
+                value="{{value}}"
+                {{#if required}}required{{/if}}
+                {{#if maxLength}}maxlength="{{maxLength}}"{{/if}}
+                {{#if error}}aria-invalid="true"{{/if}}
+            />
+        {{/ifEquals}}
+    {{/ifEquals}}
+
+    {{#if error}}
+        <small role="alert">
+            {{error}}
+        </small>
+    {{/if}}
+</div>

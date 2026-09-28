@@ -11,16 +11,16 @@
 </head>
 <body>
 	<main>
-	    {{#ui.buildStatus.enabled}}
+		{{#ui.buildStatus.enabled}}
 			<div>
 				{{ui.buildStatus.label}}
 				<a href="{{ui.buildStatus.url}}">
 					<img src="{{ui.buildStatus.img}}" alt="{{ui.buildStatus.label}}">
 				</a>
 			</div>
-	    {{/ui.buildStatus.enabled}}
+		{{/ui.buildStatus.enabled}}
 
-    	{{{body}}}
+		{{{body}}}
 	</main>
 </body>
 </html>

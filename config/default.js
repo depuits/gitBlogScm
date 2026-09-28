@@ -28,7 +28,50 @@ module.exports = {
 
    // will be replaced with templating.
    content: {
-      fileUploadDest: 'src/images',
+      fileUploadDest: 'src/uploads',
       fileCreateDest: 'src/items',
+
+      fields: [
+          {
+            name: 'image',
+            label: 'Image',
+            type: 'file',
+            required: false,
+            multiple: false,
+            accept: [ 'image/*', ],
+            dest: 'src/images',
+         }, {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            required: false,
+         }, {
+            name: 'collection',
+            label: 'Collections',
+            type: 'select',
+            required: true,
+            multiple: true,            
+            options: [
+               'joeri',
+               'elien',
+               'noah',
+               'enzo',
+            ],
+         }, {
+            name: 'date',
+            label: 'Date',
+            type: 'date',
+            required: true,
+         }, {
+            name: 'sortDate',
+            label: 'SortDate',
+            type: 'checkbox',
+         },
+      ],
+      validation: {
+         anyOf: [
+            [ 'image', 'description', ]
+         ],
+       },
    },
 };

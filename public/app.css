@@ -1,3 +1,31 @@
+[role="alert"] {
+    color: #b42318;
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.5rem 0;
+}
+
+.field [role="alert"] {
+    display: block;
+    font-size: 0.9rem;
+}
+
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+    border-color: #b42318;
+}
+
+input[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus {
+    outline-color: #b42318;
+}
+
+
+/* share notice styling */
 .share-notice {
     margin: 1rem 0;
     padding: 0.75rem 1rem;

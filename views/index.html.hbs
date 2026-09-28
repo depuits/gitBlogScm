@@ -1,25 +1,15 @@
 <h1>{{app.description}}</h1>
 
+{{#if errors._form}}
+	<p role="alert">
+		{{errors._form}}
+	</p>
+{{/if}}
+
 <form action="/item" method="post" enctype="multipart/form-data">
-	<section>
-		<label for="frm_img">Image</label>
-		<input type="file" id="frm_img" accept="image/jpeg,image/png,image/webp" name="image" />
-
-		<label for="frm_desc">Description</label>
-		<input type="text" id="frm_desc" name="desc" />
-
-		<label for="frm_col">Collections</label>
-		<select name="collection" id="frm_col" multiple required>
-			<option value="joeri">Joeri</option>
-			<option value="elien">Elien</option>
-			<option value="noah">Noah</option>
-			<option value="enzo">Enzo</option>
-		</select>
-
-		<label for="frm_date">Date</label>
-		<input type="date" id="frm_date" name="date" required />
-		<label for="frm_sortDate">Sortdate <input type="checkbox" role="switch" id="frm_sortDate" name="sortDate" /></label>		
-	</section>
+	{{#each content.fields}}
+		{{> form-field.html this value=(lookup ../values name) error=(lookup ../errors name)}}
+	{{/each}}
 
 	<input type="submit" value="{{ui.submitLabel}}">
 </form>

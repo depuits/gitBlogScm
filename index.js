@@ -10,6 +10,9 @@ const config = require('config');
 const simpleGit = require('simple-git');
 const handleForm = require('./handleForm.js');
 
+const handlebarsHelpers = require('./lib/handlebarsHelpers');
+const validateForm = require('./lib/validateForm');
+
 const devMode =
 	process.argv.includes('--dev') ||
 	process.argv.includes('--test');
@@ -25,6 +28,9 @@ const fileCreateDest = path.join(repoDest, config.get('content.fileCreateDest'))
 const viewConfig = {
 	app: config.get('app'),
 	ui: config.get('ui'),
+	content: {
+		fields: config.get('content.fields'),
+	},
 };
 
 if (devMode) {
@@ -41,7 +47,7 @@ async function setupApp() {
 	const repoExists = fs.existsSync(repoDest);
 
 	//create directory for git initialisation
-	await fs.promises.mkdir(repoDest, {recursive:true});
+	await fs.promises.mkdir(repoDest, { recursive:true });
 
 	const git = simpleGit(repoDest);
 
@@ -55,8 +61,33 @@ async function setupApp() {
 		await git.addConfig('user.email', gitUserMail);
 	}
 	
+	const fileFieldsByName = config
+		.get('content.fields')
+		.filter(field => field.type === 'file')
+		.map(field => [field.name, field]);
+
+	// multer file upload setup
 	const storage = multer.diskStorage({
-		destination: fileUploadDest,
+		destination: async (req, file, callback) => {
+			try {
+				const field = fileFieldsByName.get(file.fieldname);
+
+				if (!field) {
+					return callback(
+						new Error(`Unexpected file field: ${file.fieldname}`)
+					);
+				}
+
+				const destination = field.dest || fileUploadDest;
+				const absoluteDestination = path.resolve(destination);
+
+				await fs.promises.mkdir(absoluteDestination, { recursive: true });
+
+				callback(null, absoluteDestination);
+			} catch (error) {
+				callback(error);
+			}
+		},
 		filename: function (req, file, cb) {
 			crypto.pseudoRandomBytes(16, function (err, raw) {
 				if (err) return cb(err);
@@ -66,17 +97,21 @@ async function setupApp() {
 		},
 	});
 	const upload = multer({ storage: storage });
+
+	const fileFields = config
+		.get('content.fields')
+		.filter(field => field.type === 'file')
+		.map(field => ({
+			name: field.name,
+			maxCount: field.multiple ? 100 : 1,
+		}));
+
+	// express application setup
 	const app = express();
 
 	app.engine('hbs', engine({
 		extname: '.hbs',
-		helpers: {
-			json(value) {
-				return new Handlebars.SafeString(
-					JSON.stringify(value)
-				);
-			},
-		},
+		helpers: handlebarsHelpers,
 	}));
 
 	app.set('view engine', 'hbs');
@@ -99,9 +134,8 @@ async function setupApp() {
 		});
 	});
 
-	app.post('/item', upload.single('image'), async (req, res, next) => {
+	app.post('/item', upload.fields(fileFields), async (req, res, next) => {
 		try {
-
 			if (!devMode) {
 				//1. `git pull` # to make sure we have the latest version and no merge conflicts
 				console.log ('pull');
@@ -110,10 +144,32 @@ async function setupApp() {
 			
 			//2. upload and create new files
 			console.log ('processing input');
-			let changedFiles = await handleForm(fileCreateDest, req);
+
+			const fields = config.get('content.fields');
+			const validation = config.has('content.validation') ? config.get('content.validation') : {};
+			const errors = validateForm(
+				fields,
+				req.body,
+				req.files || [],
+				validation
+			);
+
+			if (Object.keys(errors).length > 0) {
+				console.log ('input error');
+
+				return res.status(400).render(
+					'index.html.hbs',
+					{
+						...viewConfig,
+						values: req.body,
+						errors,
+					}
+				);
+			}
+			/*let changedFiles = await handleForm(fileCreateDest, req);
 
 			// remove repo dir from changedFiles paths
-			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
+			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));*/
 
 			if (devMode) {
 				console.log('DEV MODE: skipping git add/commit/push');
@@ -134,8 +190,16 @@ async function setupApp() {
 			}
 
 			res.redirect('success');
-		} catch (e) {
-			return next(e)
+		} catch (error) {
+			console.error(error);
+
+			return res.status(500).render( 'index.html.hbs', {
+				...viewConfig,
+				values: req.body,
+				errors: {
+					_form: 'An unexpected error occurred while processing the form.',
+				},
+			} );
 		}
 	});
 
