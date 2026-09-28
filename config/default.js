@@ -28,9 +28,6 @@ module.exports = {
 
    // will be replaced with templating.
    content: {
-      fileUploadDest: 'src/uploads',
-      fileCreateDest: 'src/items',
-
       fields: [
           {
             name: 'image',
@@ -39,7 +36,7 @@ module.exports = {
             required: false,
             multiple: false,
             accept: [ 'image/*', ],
-            dest: 'src/images',
+            destination: 'src/images',
          }, {
             name: 'description',
             label: 'Description',
@@ -72,6 +69,34 @@ module.exports = {
          anyOf: [
             [ 'image', 'description', ]
          ],
-       },
+      },
+
+      output: {
+          files: [
+              {
+                  template: `---
+collection:
+{{#each collection}}
+  - {{this}}
+{{/each}}
+{{#if image}}
+image: "{{image}}"
+{{/if}}
+{{#if desc}}
+desc: "{{desc}}"
+{{/if}}
+{{#if sortDate}}
+sortDate: "{{date}}"
+{{else}}
+date: "{{date}}"
+{{/if}}
+---
+
+`,
+                  destination: 'src/items',
+                  filename: '{{date}}_{{hash}}.md',
+              },
+          ],
+      },
    },
 };

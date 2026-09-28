@@ -8,10 +8,10 @@ const fs = require('fs');
 const path = require('path');
 const config = require('config');
 const simpleGit = require('simple-git');
-const handleForm = require('./handleForm.js');
 
 const handlebarsHelpers = require('./lib/handlebarsHelpers');
-const validateForm = require('./lib/validateForm');
+const { normalizeValues, validateForm } = require('./lib/validateForm');
+const generateOutput = require('./lib/generateOutput');
 
 const devMode =
 	process.argv.includes('--dev') ||
@@ -21,9 +21,6 @@ const gitRepo = config.get('git.url');
 const repoDest = config.get('git.path');
 const gitUserName = config.get('git.userName');
 const gitUserMail = config.get('git.userMail');
-
-const fileUploadDest = path.join(repoDest, config.get('content.fileUploadDest'));
-const fileCreateDest = path.join(repoDest, config.get('content.fileCreateDest'));
 
 const viewConfig = {
 	app: config.get('app'),
@@ -78,12 +75,11 @@ async function setupApp() {
 					);
 				}
 
-				const destination = field.dest || fileUploadDest;
-				const absoluteDestination = path.resolve(destination);
+				const destination = field.destination;
+				const repoDestination = path.join(repoDest, destination);
+				await fs.promises.mkdir(repoDestination, { recursive: true });
 
-				await fs.promises.mkdir(absoluteDestination, { recursive: true });
-
-				callback(null, absoluteDestination);
+				callback(null, repoDestination);
 			} catch (error) {
 				callback(error);
 			}
@@ -147,12 +143,8 @@ async function setupApp() {
 
 			const fields = config.get('content.fields');
 			const validation = config.has('content.validation') ? config.get('content.validation') : {};
-			const errors = validateForm(
-				fields,
-				req.body,
-				req.files || [],
-				validation
-			);
+			const data = normalizeFormData(fields, req.body, req.files || {});
+			const errors = validateForm(fields, data, validation);
 
 			if (Object.keys(errors).length > 0) {
 				console.log ('input error');
@@ -166,10 +158,13 @@ async function setupApp() {
 					}
 				);
 			}
-			/*let changedFiles = await handleForm(fileCreateDest, req);
 
+			//TODO use generateoutput
+			//const output = config.get('content.output');
+			//let changedFiles = await generateOutput(output, { data, fields } );
+			
 			// remove repo dir from changedFiles paths
-			changedFiles = changedFiles.map((item) => path.relative(repoDest, item));*/
+			//changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
 
 			if (devMode) {
 				console.log('DEV MODE: skipping git add/commit/push');
