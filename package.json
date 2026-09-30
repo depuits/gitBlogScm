@@ -20,6 +20,6 @@
     "express": "^5.2.1",
     "express-handlebars": "^9.0.1",
     "multer": "^2.4.0",
-    "simple-git": "^3.36.0"
+    "simple-git": "^4.0.2"
   }
 }

@@ -7,7 +7,7 @@ const { engine } = require('express-handlebars');
 const fs = require('fs');
 const path = require('path');
 const config = require('config');
-const simpleGit = require('simple-git');
+const { simpleGit } = require('simple-git');
 
 const handlebarsHelpers = require('./lib/handlebarsHelpers');
 const { normalizeValues, validateForm } = require('./lib/validateForm');
@@ -17,10 +17,10 @@ const devMode =
 	process.argv.includes('--dev') ||
 	process.argv.includes('--test');
 
-const gitRepo = config.get('git.url');
-const repoDest = config.get('git.path');
-const gitUserName = config.get('git.userName');
-const gitUserMail = config.get('git.userMail');
+const gitConfig = {
+    ...config.get('git'),
+    path: path.resolve(config.get('git.path')),
+};
 
 const viewConfig = {
 	app: config.get('app'),
@@ -33,35 +33,47 @@ const viewConfig = {
 if (devMode) {
 	console.log('Running in development/test mode - Git actions disabled.');
 } else {	
-	if (!gitRepo || !gitUserName || !gitUserMail) {
+	if (!gitConfig.url || !gitConfig.author.name || !gitConfig.author.email) {
 		console.error('Git config not complete.');
 		process.exit(1);
 	}
 }
+function authenticatedUrl(url, auth) {
+	const parsedUrl = new URL(url);
+
+	parsedUrl.username = encodeURIComponent(auth.username);
+	parsedUrl.password = encodeURIComponent(auth.password);
+
+	return parsedUrl.toString();
+}
 
 async function setupApp() {
 	// clone git repo if it does not exist
-	const repoExists = fs.existsSync(repoDest);
+	const repoExists = fs.existsSync(gitConfig.path);
 
 	//create directory for git initialisation
-	await fs.promises.mkdir(repoDest, { recursive:true });
+	await fs.promises.mkdir(gitConfig.path, { recursive:true });
 
-	const git = simpleGit(repoDest);
+	const git = simpleGit(gitConfig.path);
 
 	if (!devMode) {
 		if (!repoExists) {
-			console.log ('Cloning git repo: ' + gitRepo);
-			await git.clone(gitRepo, '.');
+			console.log ('Cloning git repo: ' + gitConfig.url);
+
+			const remoteUrl = authenticatedUrl(gitConfig.url, gitConfig.auth);
+			await git.clone(remoteUrl, '.');
 		}
 
-		await git.addConfig('user.name', gitUserName);
-		await git.addConfig('user.email', gitUserMail);
+		await git.addConfig('user.name', gitConfig.author.name);
+		await git.addConfig('user.email', gitConfig.author.email);
 	}
 	
-	const fileFieldsByName = config
-		.get('content.fields')
-		.filter(field => field.type === 'file')
-		.map(field => [field.name, field]);
+	const fileFieldsByName = new Map(
+		config
+			.get('content.fields')
+			.filter(field => field.type === 'file')
+			.map(field => [field.name, field])
+	);
 
 	// multer file upload setup
 	const storage = multer.diskStorage({
@@ -75,11 +87,10 @@ async function setupApp() {
 					);
 				}
 
-				const destination = field.destination;
-				const repoDestination = path.join(repoDest, destination);
-				await fs.promises.mkdir(repoDestination, { recursive: true });
+				const gitRepoPathination = path.join(gitConfig.path, field.destination);
+				await fs.promises.mkdir(gitRepoPathination, { recursive: true });
 
-				callback(null, repoDestination);
+				callback(null, gitRepoPathination);
 			} catch (error) {
 				callback(error);
 			}
@@ -143,7 +154,7 @@ async function setupApp() {
 
 			const fields = config.get('content.fields');
 			const validation = config.has('content.validation') ? config.get('content.validation') : {};
-			const data = normalizeFormData(fields, req.body, req.files || {});
+			const data = normalizeValues(fields, req.body, req.files || {});
 			const errors = validateForm(fields, data, validation);
 
 			if (Object.keys(errors).length > 0) {
@@ -159,23 +170,31 @@ async function setupApp() {
 				);
 			}
 
-			//TODO use generateoutput
-			//const output = config.get('content.output');
-			//let changedFiles = await generateOutput(output, { data, fields } );
+			// use content output the generate output
+			const output = config.get('content.output');
+			let createdFiles = await generateOutput(gitConfig.path, output, { data, fields } );
 			
-			// remove repo dir from changedFiles paths
-			//changedFiles = changedFiles.map((item) => path.relative(repoDest, item));
+			// add uploaded files to created files
+			const uploadedFiles = Object
+				.values(req.files || {})
+				.flat()
+				.map(file => file.path);
+
+			createdFiles = [ ...createdFiles, ...uploadedFiles, ];
+
+			// remove repo dir from createdFiles paths
+			createdFiles = createdFiles.map((item) => path.relative(gitConfig.path, item));
 
 			if (devMode) {
 				console.log('DEV MODE: skipping git add/commit/push');
-				console.log('Changed files:', changedFiles);
+				console.log('Created files:', createdFiles);
 			} else {
 				//3. `git add .`
-				console.log ('add file');
-				await git.add(changedFiles);
+				console.log ('add files');
+				await git.add(createdFiles);
 
 				//4. `git commit`
-				const mfn = path.parse(changedFiles[0]).name;
+				const mfn = path.parse(createdFiles[0]).name;
 				console.log ('create commit for ' + mfn);
 				await git.commit(`added item (${mfn})`);
 

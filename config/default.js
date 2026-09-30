@@ -1,102 +1,108 @@
 module.exports = {
-   server: {
-      port : 3000,
-   },
+	server: {
+		port : 3000,
+	},
 
-   app: {
-      title: 'Git Blog SCM',
-      shortTitle: 'Blog SCM',
-      description: 'Manage content for your static site',
-   },
+	app: {
+		title: 'Git Blog SCM',
+		shortTitle: 'Blog SCM',
+		description: 'Manage content for your static site',
+	},
 
-   ui: {
-     buildStatus: {
-       enabled: false,
-       url: '',
-       img: '',
-       label: 'Build status',
-     },
-     submitLabel: 'Add',
-   },
+	ui: {
+		buildStatus: {
+			enabled: false,
+			url: '',
+			img: '',
+			label: 'Build status',
+		},
+		submitLabel: 'Add',
+	},
 
-   git: {
-      url: '',
-      path: 'repo',
-      userName: 'gitBlogScm',
-      userMail: '',
-   },
+	git: {
+		url: '',
+		path: 'repo',
 
-   // will be replaced with templating.
-   content: {
-      fields: [
-          {
-            name: 'image',
-            label: 'Image',
-            type: 'file',
-            required: false,
-            multiple: false,
-            accept: [ 'image/*', ],
-            destination: 'src/images',
-         }, {
-            name: 'description',
-            label: 'Description',
-            type: 'textarea',
-            required: false,
-         }, {
-            name: 'collection',
-            label: 'Collections',
-            type: 'select',
-            required: true,
-            multiple: true,            
-            options: [
-               'joeri',
-               'elien',
-               'noah',
-               'enzo',
-            ],
-         }, {
-            name: 'date',
-            label: 'Date',
-            type: 'date',
-            required: true,
-         }, {
-            name: 'sortDate',
-            label: 'SortDate',
-            type: 'checkbox',
-         },
-      ],
-      validation: {
-         anyOf: [
-            [ 'image', 'description', ]
-         ],
-      },
+		auth: {
+			username: '',
+			password: '',
+		},
 
-      output: {
-          files: [
-              {
-                  template: `---
+		author: {
+			name: 'gitBlogScm',
+			email: '',
+		},
+	},
+
+	// will be replaced with templating.
+	content: {
+		fields: [
+			{
+				name: 'image',
+				label: 'Image',
+				type: 'file',
+				required: false,
+				multiple: false,
+				accept: [ 'image/*', ],
+				destination: 'src/images',
+			}, {
+				name: 'description',
+				label: 'Description',
+				type: 'textarea',
+				required: false,
+			}, {
+				name: 'collection',
+				label: 'Collections',
+				type: 'select',
+				required: true,
+				multiple: true,            
+				options: [
+					'joeri',
+					'elien',
+					'noah',
+					'enzo',
+				],
+			}, {
+				name: 'date',
+				label: 'Date',
+				type: 'date',
+				required: true,
+			}, {
+				name: 'sortDate',
+				label: 'SortDate',
+				type: 'checkbox',
+			},
+		],
+		validation: {
+			anyOf: [
+				[ 'image', 'description', ]
+			],
+		},
+
+		output: {
+			files: [
+				{
+					template: `---
 collection:
-{{#each collection}}
+{{#each data.collection}}
   - {{this}}
 {{/each}}
-{{#if image}}
-image: "{{image}}"
+{{#if data.image}}
+image: "{{data.image.filename}}"
 {{/if}}
-{{#if desc}}
-desc: "{{desc}}"
+{{#if data.desc}}
+desc: "{{data.desc}}"
 {{/if}}
-{{#if sortDate}}
-sortDate: "{{date}}"
+{{#if data.sortDate}}
+sortDate: "{{data.date}}"
 {{else}}
-date: "{{date}}"
+date: "{{data.date}}"
 {{/if}}
 ---
-
 `,
-                  destination: 'src/items',
-                  filename: '{{date}}_{{hash}}.md',
-              },
-          ],
-      },
-   },
+					path: 'src/items/{{data.date}}_{{hash}}.md',
+				},
+			],
+		},
+	},
 };
