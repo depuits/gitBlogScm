@@ -90,8 +90,8 @@ collection:
 {{#if data.image}}
 image: "{{data.image.filename}}"
 {{/if}}
-{{#if data.desc}}
-desc: "{{data.desc}}"
+{{#if data.description}}
+desc: "{{data.description}}"
 {{/if}}
 {{#if data.sortDate}}
 sortDate: "{{data.date}}"

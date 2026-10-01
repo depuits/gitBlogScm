@@ -4,22 +4,26 @@ const crypto = require('node:crypto');
 const Handlebars = require('handlebars');
 const { engine } = require('express-handlebars');
 
-const fs = require('fs');
 const path = require('path');
 const config = require('config');
-const { simpleGit } = require('simple-git');
 
 const handlebarsHelpers = require('./lib/handlebarsHelpers');
 const { normalizeValues, validateForm } = require('./lib/validateForm');
 const generateOutput = require('./lib/generateOutput');
+const cleanupFiles = require('./lib/cleanupFiles');
+const { resolveDirectoryPath } = require('./lib/pathUtils');
+
+const { createGitRepository } = require('./lib/git');
+const GitContentPublisher = require('./lib/contentPublishers/gitContentPublisher');
+const ConsoleContentPublisher = require('./lib/contentPublishers/consoleContentPublisher');
 
 const devMode =
 	process.argv.includes('--dev') ||
 	process.argv.includes('--test');
 
 const gitConfig = {
-    ...config.get('git'),
-    path: path.resolve(config.get('git.path')),
+	...config.get('git'),
+	path: path.resolve(config.get('git.path')),
 };
 
 const viewConfig = {
@@ -30,73 +34,40 @@ const viewConfig = {
 	},
 };
 
-if (devMode) {
-	console.log('Running in development/test mode - Git actions disabled.');
-} else {	
-	if (!gitConfig.url || !gitConfig.author.name || !gitConfig.author.email) {
-		console.error('Git config not complete.');
-		process.exit(1);
-	}
-}
-function authenticatedUrl(url, auth) {
-	const parsedUrl = new URL(url);
-
-	parsedUrl.username = encodeURIComponent(auth.username);
-	parsedUrl.password = encodeURIComponent(auth.password);
-
-	return parsedUrl.toString();
-}
-
 async function setupApp() {
-	// clone git repo if it does not exist
-	const repoExists = fs.existsSync(gitConfig.path);
+	let contentPublisher;
+	if (devMode) { 
+		console.log('Running in development/test mode - Git actions disabled.');
+		contentPublisher = new ConsoleContentPublisher();
+	} else {
+		const git = await createGitRepository(gitConfig);
+		contentPublisher = new GitContentPublisher(git);
+	}
 
-	//create directory for git initialisation
-	await fs.promises.mkdir(gitConfig.path, { recursive:true });
+	const uploadDestinations = new Map();
 
-	const git = simpleGit(gitConfig.path);
-
-	if (!devMode) {
-		if (!repoExists) {
-			console.log ('Cloning git repo: ' + gitConfig.url);
-
-			const remoteUrl = authenticatedUrl(gitConfig.url, gitConfig.auth);
-			await git.clone(remoteUrl, '.');
+	for (const field of fields) {
+		if (field.type !== 'file') {
+			continue;
 		}
 
-		await git.addConfig('user.name', gitConfig.author.name);
-		await git.addConfig('user.email', gitConfig.author.email);
+		const destination = await resolveDirectoryPath(gitConfig.path, field.destination)
+		uploadDestinations.set(field.name, destination);
 	}
-	
-	const fileFieldsByName = new Map(
-		config
-			.get('content.fields')
-			.filter(field => field.type === 'file')
-			.map(field => [field.name, field])
-	);
 
 	// multer file upload setup
 	const storage = multer.diskStorage({
-		destination: async (req, file, callback) => {
-			try {
-				const field = fileFieldsByName.get(file.fieldname);
+		destination: (req, file, cb) => {
+			const destination = uploadDestinations.get(file.fieldname);
 
-				if (!field) {
-					return callback(
-						new Error(`Unexpected file field: ${file.fieldname}`)
-					);
-				}
-
-				const gitRepoPathination = path.join(gitConfig.path, field.destination);
-				await fs.promises.mkdir(gitRepoPathination, { recursive: true });
-
-				callback(null, gitRepoPathination);
-			} catch (error) {
-				callback(error);
+			if (!destination) {
+				return cb(new Error(`Unexpected file field: ${file.fieldname}`));
 			}
+
+			cb(null, destination);
 		},
-		filename: function (req, file, cb) {
-			crypto.pseudoRandomBytes(16, function (err, raw) {
+		filename: (req, file, cb) => {
+			crypto.randomBytes(16, function (err, raw) {
 				if (err) return cb(err);
 
 				cb(null, raw.toString('hex') + path.extname(file.originalname).toLowerCase()); //fix for missing extension files
@@ -143,15 +114,7 @@ async function setupApp() {
 
 	app.post('/item', upload.fields(fileFields), async (req, res, next) => {
 		try {
-			if (!devMode) {
-				//1. `git pull` # to make sure we have the latest version and no merge conflicts
-				console.log ('pull');
-				await git.pull();
-			}
-			
-			//2. upload and create new files
-			console.log ('processing input');
-
+			console.log ('Validating input');
 			const fields = config.get('content.fields');
 			const validation = config.has('content.validation') ? config.get('content.validation') : {};
 			const data = normalizeValues(fields, req.body, req.files || {});
@@ -159,6 +122,8 @@ async function setupApp() {
 
 			if (Object.keys(errors).length > 0) {
 				console.log ('input error');
+
+				await cleanupFiles(req.files);
 
 				return res.status(400).render(
 					'index.html.hbs',
@@ -170,7 +135,11 @@ async function setupApp() {
 				);
 			}
 
-			// use content output the generate output
+			//update repo to make sure we have the latest version and no merge conflicts
+			await contentPublisher.prepare();
+
+			console.log ('processing input');
+			// create new files using content output the generate output
 			const output = config.get('content.output');
 			let createdFiles = await generateOutput(gitConfig.path, output, { data, fields } );
 			
@@ -185,23 +154,8 @@ async function setupApp() {
 			// remove repo dir from createdFiles paths
 			createdFiles = createdFiles.map((item) => path.relative(gitConfig.path, item));
 
-			if (devMode) {
-				console.log('DEV MODE: skipping git add/commit/push');
-				console.log('Created files:', createdFiles);
-			} else {
-				//3. `git add .`
-				console.log ('add files');
-				await git.add(createdFiles);
-
-				//4. `git commit`
-				const mfn = path.parse(createdFiles[0]).name;
-				console.log ('create commit for ' + mfn);
-				await git.commit(`added item (${mfn})`);
-
-				//5. `git push`
-				console.log ('push');
-				await git.push();
-			}
+			// public the changes
+			await contentPublisher.publish( files, commitMessage );
 
 			res.redirect('success');
 		} catch (error) {
