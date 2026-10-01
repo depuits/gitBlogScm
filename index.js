@@ -16,6 +16,9 @@ const { resolveDirectoryPath } = require('./lib/pathUtils');
 const { createGitRepository } = require('./lib/git');
 const GitContentPublisher = require('./lib/contentPublishers/gitContentPublisher');
 const ConsoleContentPublisher = require('./lib/contentPublishers/consoleContentPublisher');
+const createAsyncLock = require('./lib/asyncLock');
+
+const submissionLock = createAsyncLock();
 
 const devMode =
 	process.argv.includes('--dev') ||
@@ -46,7 +49,7 @@ async function setupApp() {
 
 	const uploadDestinations = new Map();
 
-	for (const field of fields) {
+	for (const field of config.get('content.fields')) {
 		if (field.type !== 'file') {
 			continue;
 		}
@@ -113,51 +116,56 @@ async function setupApp() {
 	});
 
 	app.post('/item', upload.fields(fileFields), async (req, res, next) => {
+		console.log ('Validating input');
+		const fields = config.get('content.fields');
+		const validation = config.has('content.validation') ? config.get('content.validation') : {};
+		const data = normalizeValues(fields, req.body, req.files || {});
+		const errors = validateForm(fields, data, validation);
+
+		if (Object.keys(errors).length > 0) {
+			console.log ('input error');
+
+			await cleanupFiles(req.files);
+
+			return res.status(400).render(
+				'index.html.hbs',
+				{
+					...viewConfig,
+					values: req.body,
+					errors,
+				}
+			);
+		}
+
 		try {
-			console.log ('Validating input');
-			const fields = config.get('content.fields');
-			const validation = config.has('content.validation') ? config.get('content.validation') : {};
-			const data = normalizeValues(fields, req.body, req.files || {});
-			const errors = validateForm(fields, data, validation);
+			await submissionLock.runExclusive(async () => {
+				//update repo to make sure we have the latest version and no merge conflicts
+				await contentPublisher.prepare();
 
-			if (Object.keys(errors).length > 0) {
-				console.log ('input error');
+				console.log ('processing input');
+				// create new files using content output the generate output
+				const output = config.get('content.output');
+				let createdFiles = await generateOutput(gitConfig.path, output, { data, fields } );
+				
+				// add uploaded files to created files
+				const uploadedFiles = Object
+					.values(req.files || {})
+					.flat()
+					.map(file => file.path);
 
-				await cleanupFiles(req.files);
+				createdFiles = [ ...createdFiles, ...uploadedFiles, ];
 
-				return res.status(400).render(
-					'index.html.hbs',
-					{
-						...viewConfig,
-						values: req.body,
-						errors,
-					}
-				);
-			}
+				// remove repo dir from createdFiles paths
+				createdFiles = createdFiles.map((item) => path.relative(gitConfig.path, item));
 
-			//update repo to make sure we have the latest version and no merge conflicts
-			await contentPublisher.prepare();
+				const mfn = path.parse(createdFiles[0]).name;
+				const commitMessage = `added item ${mfn}`;
 
-			console.log ('processing input');
-			// create new files using content output the generate output
-			const output = config.get('content.output');
-			let createdFiles = await generateOutput(gitConfig.path, output, { data, fields } );
-			
-			// add uploaded files to created files
-			const uploadedFiles = Object
-				.values(req.files || {})
-				.flat()
-				.map(file => file.path);
+				// public the changes
+				await contentPublisher.publish( createdFiles, commitMessage );
 
-			createdFiles = [ ...createdFiles, ...uploadedFiles, ];
-
-			// remove repo dir from createdFiles paths
-			createdFiles = createdFiles.map((item) => path.relative(gitConfig.path, item));
-
-			// public the changes
-			await contentPublisher.publish( files, commitMessage );
-
-			res.redirect('success');
+				res.redirect('success');
+			});
 		} catch (error) {
 			console.error(error);
 
