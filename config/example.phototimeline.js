@@ -1,52 +1,49 @@
 module.exports = {
 	app: {
-		title: 'Photo timeline edit',
-		shortTitle: 'Timeline edit',
-		description: 'Add new item to photo timeline',
+		title: "Photo timeline edit",
+		shortTitle: "Timeline edit",
+		description: "Add new item to photo timeline",
 	},
 
 	content: {
 		fields: [
 			{
-				name: 'image',
-				label: 'Image',
-				type: 'file',
+				name: "image",
+				label: "Image",
+				type: "file",
 				required: false,
 				multiple: false,
-				accept: [ 'image/*', ],
-				destination: 'src/images',
-			}, {
-				name: 'description',
-				label: 'Description',
-				type: 'textarea',
+				accept: ["image/*"],
+				destination: "src/images",
+			},
+			{
+				name: "description",
+				label: "Description",
+				type: "textarea",
 				required: false,
-			}, {
-				name: 'collection',
-				label: 'Collections',
-				type: 'select',
+			},
+			{
+				name: "collection",
+				label: "Collections",
+				type: "select",
 				required: true,
 				multiple: true,
-				options: [
-					'joeri',
-					'elien',
-					'noah',
-					'enzo',
-				],
-			}, {
-				name: 'date',
-				label: 'Date',
-				type: 'date',
+				options: ["joeri", "elien", "noah", "enzo"],
+			},
+			{
+				name: "date",
+				label: "Date",
+				type: "date",
 				required: true,
-			}, {
-				name: 'sortDate',
-				label: 'SortDate',
-				type: 'checkbox',
+			},
+			{
+				name: "sortDate",
+				label: "SortDate",
+				type: "checkbox",
 			},
 		],
 		validation: {
-			anyOf: [
-				[ 'image', 'description', ]
-			],
+			anyOf: [["image", "description"]],
 		},
 
 		output: {
@@ -70,7 +67,7 @@ date: "{{data.date}}"
 {{/if}}
 ---
 `,
-					path: 'src/items/{{data.date}}_{{hash}}.md',
+					path: "src/items/{{data.date}}_{{hash}}.md",
 				},
 			],
 		},

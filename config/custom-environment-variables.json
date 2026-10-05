@@ -1,19 +1,15 @@
 {
-	"server":
-	{
+	"server": {
 		"port": "SERVER_PORT"
 	},
-	"git":
-	{
+	"git": {
 		"url": "GIT_URL",
 		"path": "GIT_PATH",
-		"auth":
-		{
+		"auth": {
 			"username": "GIT_USERNAME",
 			"password": "GIT_PASSWORD"
 		},
-		"author":
-		{
+		"author": {
 			"name": "GIT_AUTHOR_NAME",
 			"email": "GIT_AUTHOR_EMAIL"
 		}

@@ -1,51 +1,51 @@
 module.exports = {
 	app: {
-		title: 'Blog editor',
-		shortTitle: 'Blog',
-		description: 'Create a new blog post',
+		title: "Blog editor",
+		shortTitle: "Blog",
+		description: "Create a new blog post",
 	},
 
 	content: {
 		fields: [
 			{
-				name: 'title',
-				label: 'Title',
-				type: 'text',
+				name: "title",
+				label: "Title",
+				type: "text",
 				required: true,
-			}, {
-				name: 'date',
-				label: 'Date',
-				type: 'date',
+			},
+			{
+				name: "date",
+				label: "Date",
+				type: "date",
 				required: true,
-			}, {
-				name: 'author',
-				label: 'Author',
-				type: 'text',
+			},
+			{
+				name: "author",
+				label: "Author",
+				type: "text",
 				required: true,
-			}, {
-				name: 'tags',
-				label: 'Tags',
-				type: 'select',
+			},
+			{
+				name: "tags",
+				label: "Tags",
+				type: "select",
 				required: false,
 				multiple: true,
-				options: [
-					'technology',
-					'travel',
-					'personal',
-					'projects',
-				],
-			}, {
-				name: 'image',
-				label: 'Header image',
-				type: 'file',
+				options: ["technology", "travel", "personal", "projects"],
+			},
+			{
+				name: "image",
+				label: "Header image",
+				type: "file",
 				required: false,
 				multiple: false,
-				accept: [ 'image/*', ],
-				destination: 'src/images',
-			}, {
-				name: 'body',
-				label: 'Content',
-				type: 'textarea',
+				accept: ["image/*"],
+				destination: "src/images",
+			},
+			{
+				name: "body",
+				label: "Content",
+				type: "textarea",
 				required: true,
 			},
 		],
@@ -70,7 +70,7 @@ image: "{{data.image.filename}}"
 
 {{data.body}}
 `,
-					path: 'src/posts/{{data.date}}_{{hash}}.md',
+					path: "src/posts/{{data.date}}_{{hash}}.md",
 				},
 			],
 		},

@@ -1,36 +1,36 @@
 module.exports = {
 	server: {
-		port : 3000,
+		port: 3000,
 	},
 
 	app: {
-		title: 'Git Blog SCM',
-		shortTitle: 'Blog SCM',
-		description: 'Manage content for your static site',
+		title: "Git Blog SCM",
+		shortTitle: "Blog SCM",
+		description: "Manage content for your static site",
 	},
 
 	ui: {
 		buildStatus: {
 			enabled: false,
-			url: '',
-			img: '',
-			label: 'Build status',
+			url: "",
+			img: "",
+			label: "Build status",
 		},
-		submitLabel: 'Add',
+		submitLabel: "Add",
 	},
 
 	git: {
-		url: '',
-		path: 'repo',
+		url: "",
+		path: "repo",
 
 		auth: {
-			username: '',
-			password: '',
+			username: "",
+			password: "",
 		},
 
 		author: {
-			name: 'gitBlogScm',
-			email: '',
+			name: "gitBlogScm",
+			email: "",
 		},
 	},
 

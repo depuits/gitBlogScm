@@ -1,32 +1,40 @@
 {
-  "name": "gitblogscm",
-  "version": "1.0.0",
-  "description": "Simple content management interface for static generated blog in git.",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js --dev",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "example:multiple-output": "cross-env NODE_CONFIG_ENV=example.multiple-output node index.js --dev",
-    "example:phototimeline": "cross-env NODE_CONFIG_ENV=example.phototimeline node index.js --dev",
-    "example:blog": "cross-env NODE_CONFIG_ENV=example.blog node index.js --dev",
-    "example:portfolio": "cross-env NODE_CONFIG_ENV=example.portfolio node index.js --dev"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://git.bok19.net/colmanjoeri/gitBlogScm.git"
-  },
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@picocss/pico": "^2.1.1",
-    "config": "^5.0.1",
-    "express": "^5.2.1",
-    "express-handlebars": "^9.0.1",
-    "multer": "^2.4.0",
-    "simple-git": "^4.0.2"
-  },
-  "devDependencies": {
-    "cross-env": "^10.1.0"
-  }
+	"name": "gitblogscm",
+	"version": "1.0.0",
+	"description": "Simple content management interface for static generated blog in git.",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "node index.js --dev",
+		"test": "echo \"Warning: no test specified\"",
+		"example:multiple-output": "cross-env NODE_CONFIG_ENV=example.multiple-output node index.js --dev",
+		"example:phototimeline": "cross-env NODE_CONFIG_ENV=example.phototimeline node index.js --dev",
+		"example:blog": "cross-env NODE_CONFIG_ENV=example.blog node index.js --dev",
+		"example:portfolio": "cross-env NODE_CONFIG_ENV=example.portfolio node index.js --dev",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "eslint .",
+		"check": "npm run format:check && npm run lint && npm test"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://git.bok19.net/colmanjoeri/gitBlogScm.git"
+	},
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+		"@picocss/pico": "^2.1.1",
+		"config": "^5.0.1",
+		"express": "^5.2.1",
+		"express-handlebars": "^9.0.1",
+		"multer": "^2.4.0",
+		"simple-git": "^4.0.2"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"cross-env": "^10.1.0",
+		"eslint": "^10.12.0",
+		"globals": "^17.13.0",
+		"prettier": "^3.9.9"
+	}
 }
