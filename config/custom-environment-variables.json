@@ -1,0 +1,21 @@
+{
+	"server":
+	{
+		"port": "SERVER_PORT"
+	},
+	"git":
+	{
+		"url": "GIT_URL",
+		"path": "GIT_PATH",
+		"auth":
+		{
+			"username": "GIT_USERNAME",
+			"password": "GIT_PASSWORD"
+		},
+		"author":
+		{
+			"name": "GIT_AUTHOR_NAME",
+			"email": "GIT_AUTHOR_EMAIL"
+		}
+	}
+}

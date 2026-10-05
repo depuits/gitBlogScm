@@ -133,5 +133,7 @@ dist
 repo/
 
 # ignore all config files except the default
-config/
+config/*
 !config/default.js
+!config/example.*.js
+!config/custom-environment-variables.json
